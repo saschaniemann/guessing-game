@@ -16,6 +16,8 @@ class Game:
         """Initialize the game."""
         if "animal" not in st.session_state:
             st.session_state["animal"] = self.random_animal()
+        if "chat_history" not in st.session_state:
+            st.session_state["chat_history"] = []
         self.layout()
 
     def random_animal(self) -> str:
@@ -34,6 +36,9 @@ class Game:
 
         Update the game state based on whether the guess is correct or incorrect.
         """
+        st.session_state["chat_history"].append(
+            {"name": "user", "text": st.session_state["guess"]}
+        )
         if st.session_state["guess"] == st.session_state["animal"]:
             self.win()
         else:
@@ -41,24 +46,15 @@ class Game:
 
     def win(self):
         """Update session state to indicate a winning guess."""
-        st.session_state["state"] = "win"
+        st.session_state["chat_history"].append(
+            {"name": "assistant", "text": "Correct! You won."}
+        )
 
     def wrong(self):
         """Update session state to indicate an incorrect guess."""
-        st.session_state["state"] = "wrong_answer"
-
-    def output(self):
-        """Display a message based on the game state.
-
-        Show a winning message if the guess is correct; otherwise, prompt the
-        user to try again.
-        """
-        if "state" not in st.session_state:
-            return
-        if st.session_state["state"] == "win":
-            st.write("YOU WON!!")
-        elif st.session_state["state"] == "wrong_answer":
-            st.write("Wrong answer :( try again)")
+        st.session_state["chat_history"].append(
+            {"name": "assistant", "text": "Wrong! Do you have another idea?"}
+        )
 
     def layout(self):
         """Set up the game layout in the Streamlit app.
@@ -67,8 +63,12 @@ class Game:
         and the output message.
         """
         st.write("Your goal is to guess a randomly picked animal.")
-        st.text_input("Enter animal:", on_change=self.evaluate_input, key="guess")
-        self.output()
+
+        for message in st.session_state["chat_history"]:
+            with st.chat_message(message["name"]):
+                st.write(message["text"])
+
+        st.chat_input("Enter animal:", on_submit=self.evaluate_input, key="guess")
 
 
 # Instantiate and start the game
