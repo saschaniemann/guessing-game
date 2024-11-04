@@ -17,7 +17,9 @@ class Game:
         if "animal" not in st.session_state:
             st.session_state["animal"] = self.random_animal()
         if "chat_history" not in st.session_state:
-            st.session_state["chat_history"] = []
+            st.session_state["chat_history"] = [
+                {"role": "assistant", "content": "What is your first guess?"}
+            ]
         self.layout()
 
     def random_animal(self) -> str:
@@ -36,8 +38,8 @@ class Game:
 
         Update the game state based on whether the guess is correct or incorrect.
         """
-        st.session_state["chat_history"].append(
-            {"name": "user", "text": st.session_state["guess"]}
+        st.session_state.chat_history.append(
+            {"role": "user", "content": st.session_state["guess"]}
         )
         if st.session_state["guess"] == st.session_state["animal"]:
             self.win()
@@ -46,14 +48,14 @@ class Game:
 
     def win(self):
         """Update session state to indicate a winning guess."""
-        st.session_state["chat_history"].append(
-            {"name": "assistant", "text": "Correct! You won."}
+        st.session_state.chat_history.append(
+            {"role": "assistant", "content": "Correct! You won."}
         )
 
     def wrong(self):
         """Update session state to indicate an incorrect guess."""
-        st.session_state["chat_history"].append(
-            {"name": "assistant", "text": "Wrong! Do you have another idea?"}
+        st.session_state.chat_history.append(
+            {"role": "assistant", "content": "Wrong! Do you have another idea?"}
         )
 
     def layout(self):
@@ -64,9 +66,8 @@ class Game:
         """
         st.write("Your goal is to guess a randomly picked animal.")
 
-        for message in st.session_state["chat_history"]:
-            with st.chat_message(message["name"]):
-                st.write(message["text"])
+        for message in st.session_state.chat_history:
+            st.chat_message(message["role"]).write(message["content"])
 
         st.chat_input("Enter animal:", on_submit=self.evaluate_input, key="guess")
 
