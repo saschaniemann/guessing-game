@@ -2,7 +2,7 @@
 
 import streamlit as st
 
-game_page = st.Page("_pages/game.py", title="Game", icon=":material/casino:")
+game_page = st.Page("_pages/game.py", title="Play", icon=":material/casino:")
 stats_page = st.Page("_pages/stats.py", title="Stats", icon=":material/query_stats:")
 
 pg = st.navigation([game_page, stats_page])
