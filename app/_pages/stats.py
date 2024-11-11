@@ -1,7 +1,6 @@
 """Contains the main logic of our guessing game app."""
 
 import streamlit as st
-from pathlib import Path
 from scipy.ndimage import uniform_filter
 import numpy as np
 import yaml

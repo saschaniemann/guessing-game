@@ -3,6 +3,7 @@
 import streamlit as st
 import random
 import yaml
+from openai import OpenAI
 
 st.title("Animal guessing game")
 
@@ -17,11 +18,12 @@ class Game:
     """
 
     def __init__(self):
+        self.client = OpenAI(api_key="")
         """Initialize the game."""
         if "animal" not in st.session_state:
             st.session_state["animal"] = self.random_animal()
         if "chat_history" not in st.session_state:
-            st.session_state["chat_history"] = [self.initial_message()]
+            st.session_state["chat_history"] = self.initial_message()
         if "game_history" not in st.session_state:
             st.session_state["game_history"] = [
                 self.empty_game(st.session_state.animal)
@@ -62,15 +64,20 @@ class Game:
 
     def wrong(self):
         """Update session state to indicate an incorrect guess."""
+        response = self.client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=st.session_state.chat_history
+        )
+
         st.session_state.chat_history.append(
-            {"role": "assistant", "content": "Wrong! Do you have another idea?"}
+            {"role": "assistant", "content": response}
         )
 
     def reset_game(self):
         """Reset game and initialize all necessary variables."""
         st.session_state.animal = self.random_animal()
         st.session_state.game_history.append(self.empty_game(st.session_state.animal))
-        st.session_state.chat_history = [self.initial_message()]
+        st.session_state.chat_history = self.initial_message()
         st.session_state.state = "guessing"
 
     def empty_game(self, animal: str) -> dict:
@@ -85,14 +92,16 @@ class Game:
         """
         return {"animal": animal, "number_of_guesses": 0}
 
-    def initial_message(self) -> dict:
+    def initial_message(self) -> list[dict]:
         """Get initital message.
 
         Returns:
             dict: initial message that should be displayed at the top of the chat
 
         """
-        return {"role": "assistant", "content": "What is your first guess?"}
+
+        return [{"role": "system", "content": f"You are a game master of an animal guessing game. The user asks questions. You answer with yes or no. The animal is '{st.session_state.animal}'."},
+                {"role": "assistant", "content": "What is your first guess?"}]
 
     def layout(self):
         """Set up the game layout in the Streamlit app.
@@ -102,7 +111,9 @@ class Game:
         """
         st.write("Your goal is to guess a randomly picked animal.")
 
+        print(st.session_state.chat_history)
         for message in st.session_state.chat_history:
+            print(message)
             st.chat_message(message["role"]).write(message["content"])
 
         st.chat_input(

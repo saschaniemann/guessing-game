@@ -1,3 +1,7 @@
 streamlit
+numpy
+scipy
+yaml
+openai
 ruff
 pre-commit
