@@ -2,9 +2,13 @@
 
 import streamlit as st
 import random
+import yaml
 
 st.title("Animal guessing game")
 
+stream = open("app/guessing_config.yaml", 'r')
+data = yaml.load(stream, Loader=yaml.Loader)
+all_animals = data["animals"]
 
 class Game:
     """Manage the animal guessing game.
@@ -33,9 +37,7 @@ class Game:
             str: The name of the randomly chosen animal.
 
         """
-        return random.choice(
-            ["fox", "goose", "bear", "camel", "lama", "cow", "dog", "cat"]
-        )
+        return random.choice(all_animals)
 
     def evaluate_input(self):
         """Evaluate the player's guess against the selected animal.
