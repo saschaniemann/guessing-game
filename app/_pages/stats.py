@@ -3,6 +3,7 @@
 import streamlit as st
 from pathlib import Path
 from scipy.ndimage import uniform_filter
+import numpy as np
 import yaml
 
 st.title("Stats")
@@ -13,18 +14,18 @@ animals = data["animals"]
 animals.insert(0, "All")
 option = st.selectbox("Animals", animals)
 
-if "game_history" in st.session_state and len(st.session_state.game_history) > 2:
-    print(st.session_state.game_history)
+if "game_history" in st.session_state and len(st.session_state.game_history) > 0:
     relevant_games = st.session_state.game_history[:-1]
     if option != "All":
         relevant_games = list(filter(lambda game: (game["animal"] == option), relevant_games))
+    guesses = [game["number_of_guesses"] for game in relevant_games]
+    average = np.average(guesses)
+    
+    st.caption(f"Total games played: {len(relevant_games)}")
+    st.caption(f"Average guesses: {average}")
     if len(relevant_games) > 0:
-        print(relevant_games)
         st.bar_chart(data=relevant_games, x="animal", y="number_of_guesses", y_label="Number of guesses")
-        guesses = [game["number_of_guesses"] for game in relevant_games]
+        moving_averages = uniform_filter(guesses, size=5, mode="nearest", output=float)
         print(guesses)
-        averages = uniform_filter(guesses, size=2, mode="nearest", output=float)
-        print(averages)
-        st.line_chart(averages)
-    else:
-        pass #Print text if no data available
+        print(moving_averages)
+        st.line_chart(moving_averages)
