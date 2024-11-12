@@ -16,8 +16,8 @@ class Game:
     """
 
     def __init__(self):
-        # self.client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
         """Initialize the game."""
+        self.client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
         if "animal" not in st.session_state:
             st.session_state["animal"] = self.random_animal()
         if "chat_history" not in st.session_state:
@@ -64,7 +64,7 @@ class Game:
         """Update session state to indicate an incorrect guess."""
         with st.chat_message("assistant"):
             stream = self.client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4o-mini",
                 messages=st.session_state.chat_history,
                 stream=True,
             )
