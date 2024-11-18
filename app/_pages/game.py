@@ -69,7 +69,12 @@ class Game:
                 stream=True,
             )
             response = st.write_stream(stream)
-        st.session_state.chat_history.append({"role": "assistant", "content": response})
+        if response == "Correct! You won.":
+            self.win()
+        else:
+            st.session_state.chat_history.append(
+                {"role": "assistant", "content": response}
+            )
 
     def reset_game(self):
         """Reset game and initialize all necessary variables."""
@@ -100,9 +105,9 @@ class Game:
         return [
             {
                 "role": "system",
-                "content": f"You are a game master of an animal guessing game. The user asks questions. You answer with yes or no. The animal is '{st.session_state.animal}'.",
+                "content": f"You are a game master of an animal guessing game. The user asks questions. You answer with yes or no. The animal is '{st.session_state.animal}'. Never tell the name of the animal before the user guessed it! If you think the user is right answer 'Correct! You won.'",
             },
-            {"role": "assistant", "content": "What is your first guess?"},
+            {"role": "assistant", "content": "What is your first guess or question?"},
         ]
 
     def layout(self):
@@ -119,12 +124,14 @@ class Game:
             st.chat_message(message["role"]).write(message["content"])
 
         if guess := st.chat_input(
-            "Enter animal:", disabled=(st.session_state.state == "win")
+            "Enter animal:", disabled=(st.session_state.state == "finished")
         ):
             self.evaluate_input(guess)
-
-        if st.session_state.state == "win":
+        if st.session_state.state == "finished":
             st.button("Play again", on_click=self.reset_game)
+        if st.session_state.state == "win":
+            st.session_state.state = "finished"
+            st.rerun()
 
 
 @st.cache_data
