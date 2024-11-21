@@ -28,7 +28,18 @@ class Game:
             ]
         if "state" not in st.session_state:
             st.session_state["state"] = "guessing"
-        self.layout()
+
+    @st.cache_data
+    def get_animals(_self) -> List[str]:
+        """Read animals from yaml file.
+
+        Returns:
+            List[str]: animals
+
+        """
+        with open("app/guessing_config.yaml", "r") as stream:
+            data = yaml.load(stream, Loader=yaml.Loader)
+            return data["animals"]
 
     def random_animal(self) -> str:
         """Return a randomly selected animal from a predefined list.
@@ -37,7 +48,7 @@ class Game:
             str: The name of the randomly chosen animal.
 
         """
-        return random.choice(all_animals)
+        return random.choice(self.get_animals())
 
     def evaluate_input(self, guess):
         """Evaluate the player's guess against the selected animal.
@@ -48,20 +59,7 @@ class Game:
         with st.chat_message("user"):
             st.markdown(guess)
         st.session_state.game_history[-1]["number_of_guesses"] += 1
-        if guess == st.session_state.animal:
-            self.win()
-        else:
-            self.wrong()
 
-    def win(self):
-        """Update session state to indicate a winning guess."""
-        st.session_state.chat_history.append(
-            {"role": "assistant", "content": "Correct! You won."}
-        )
-        st.session_state.state = "win"
-
-    def wrong(self):
-        """Update session state to indicate an incorrect guess."""
         with st.chat_message("assistant"):
             stream = self.client.chat.completions.create(
                 model="gpt-4o-mini",
@@ -69,12 +67,31 @@ class Game:
                 stream=True,
             )
             response = st.write_stream(stream)
+        st.session_state.chat_history.append({"role": "assistant", "content": response})
         if response == "Correct! You won.":
-            self.win()
+            st.session_state.state = "win"
+            st.rerun()
         else:
-            st.session_state.chat_history.append(
-                {"role": "assistant", "content": response}
-            )
+            self.get_quality_of_guess()
+
+    def get_quality_of_guess(self):
+        """Calculate the quality of the last guess and add it to the history."""
+        system_prompt = f"""In the context of an animal guessing game: Your job is to evaluate the quality of the user's last question from 1 (bad question) - 10 (good question). Keeping the history of this chat in mind and the knowledge the user has obtained before, a good question is a question that drastically decreases the number of remaining animals from the animals that are still possible. It does not matter if the answer would be yes or no but instead what fraction of remaining animals are ruled out. Similar to information gain. Please answer with the number only."""
+        new_history = [
+            {"role": "system", "content": system_prompt}
+        ] + st.session_state.chat_history[1:-1]
+        new_history += [
+            {
+                "role": "user",
+                "content": f"The question to evaluate is: '{new_history[-1]["content"]}'. Please only answer with a number from 1-10.",
+            }
+        ]
+        quality = self.client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=new_history,
+        )
+        quality = quality.choices[0].message.content
+        st.session_state.game_history[-1]["quality_of_guesses"].append(int(quality))
 
     def reset_game(self):
         """Reset game and initialize all necessary variables."""
@@ -93,7 +110,7 @@ class Game:
             dict: game history entry
 
         """
-        return {"animal": animal, "number_of_guesses": 0}
+        return {"animal": animal, "number_of_guesses": 0, "quality_of_guesses": []}
 
     def initial_message(self) -> List[dict]:
         """Get initital message.
@@ -110,7 +127,7 @@ class Game:
             {"role": "assistant", "content": "What is your first guess or question?"},
         ]
 
-    def layout(self):
+    def main(self):
         """Set up the game layout in the Streamlit app.
 
         Display instructions, an input box for guessing the animal,
@@ -124,30 +141,13 @@ class Game:
             st.chat_message(message["role"]).write(message["content"])
 
         if guess := st.chat_input(
-            "Enter animal:", disabled=(st.session_state.state == "finished")
+            "Enter animal:", disabled=(st.session_state.state == "win")
         ):
             self.evaluate_input(guess)
-        if st.session_state.state == "finished":
-            st.button("Play again", on_click=self.reset_game)
         if st.session_state.state == "win":
-            st.session_state.state = "finished"
-            st.rerun()
+            st.button("Play again", on_click=self.reset_game)
 
 
-@st.cache_data
-def get_animals() -> List[str]:
-    """Read animals from yaml file.
-
-    Returns:
-        List[str]: animals
-
-    """
-    print("get animals")
-    with open("app/guessing_config.yaml", "r") as stream:
-        data = yaml.load(stream, Loader=yaml.Loader)
-        return data["animals"]
-
-
-all_animals = get_animals()
 # Instantiate and start the game
 game = Game()
+game.main()
