@@ -68,15 +68,14 @@ class Game:
             )
             response = st.write_stream(stream)
         st.session_state.chat_history.append({"role": "assistant", "content": response})
+        self.get_quality_of_guess()
         if response == "Correct! You won.":
             st.session_state.state = "win"
             st.rerun()
-        else:
-            self.get_quality_of_guess()
 
     def get_quality_of_guess(self):
         """Calculate the quality of the last guess and add it to the history."""
-        system_prompt = f"""In the context of an animal guessing game: Your job is to evaluate the quality of the user's last question from 1 (bad question) - 10 (good question). Keeping the history of this chat in mind and the knowledge the user has obtained before, a good question is a question that drastically decreases the number of remaining animals from the animals that are still possible. It does not matter if the answer would be yes or no but instead what fraction of remaining animals are ruled out. Similar to information gain. Please answer with the number only."""
+        system_prompt = f"""In the context of an animal guessing game: Your job is to evaluate the quality of the user's last question from 0 (bad question) - 10 (good question). Keeping the history of this chat in mind and the knowledge the user has obtained before, a good question is a question that drastically decreases the number of remaining animals from the animals that are still possible. It does not matter if the answer would be yes or no but instead what fraction of remaining animals are ruled out. Similar to information gain. Please answer with the number only."""
         new_history = [
             {"role": "system", "content": system_prompt}
         ] + st.session_state.chat_history[1:-1]
@@ -133,6 +132,7 @@ class Game:
         Display instructions, an input box for guessing the animal,
         and the output message.
         """
+        print(st.session_state["animal"])
         st.write("Your goal is to guess a randomly picked animal.")
 
         for message in st.session_state.chat_history:
@@ -141,10 +141,17 @@ class Game:
             st.chat_message(message["role"]).write(message["content"])
 
         if guess := st.chat_input(
-            "Enter animal:", disabled=(st.session_state.state == "win")
+            "Enter animal or question:", disabled=(st.session_state.state == "win")
         ):
             self.evaluate_input(guess)
+            st.write(
+                f"Your last question/guess was of quality: {st.session_state.game_history[-1]["quality_of_guesses"][-1]}"
+            )
+
         if st.session_state.state == "win":
+            st.write(
+                f"Your last question/guess was of quality: {st.session_state.game_history[-1]["quality_of_guesses"][-1]}"
+            )
             st.button("Play again", on_click=self.reset_game)
 
 
