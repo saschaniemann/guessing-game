@@ -21,17 +21,36 @@ if "game_history" in st.session_state and len(st.session_state.game_history) > 0
         )
     guesses = [game["number_of_guesses"] for game in relevant_games]
     average = np.average(guesses) if len(guesses) > 0 else np.nan
+    quality = (
+        np.concatenate([game["quality_of_guesses"] for game in relevant_games])
+        if len(relevant_games) > 1
+        else [game["quality_of_guesses"] for game in relevant_games]
+    )
+    avg_quality = np.average(quality) if len(quality) > 0 else np.nan
 
     st.caption(f"Total games played: {len(relevant_games)}")
-    st.caption(f"Average guesses: {average}")
     if len(relevant_games) > 0:
+        st.caption(f"Average guesses: {average}")
         st.bar_chart(
             data=relevant_games,
-            x="animal",
             y="number_of_guesses",
-            y_label="Number of guesses",
+            x_label="Round",
+            y_label="Number of guesses and questions",
         )
-        moving_averages = uniform_filter(guesses, size=5, mode="nearest", output=float)
-        print(guesses)
-        print(moving_averages)
-        st.line_chart(moving_averages)
+        st.caption(
+            f"Average quality (last game): {np.average(relevant_games[-1]["quality_of_guesses"])}"
+        )
+        st.bar_chart(
+            data=relevant_games[-1]["quality_of_guesses"],
+            x_label="number of question/guess",
+            y_label="quality of guess",
+        )
+    if len((relevant_games)) > 1:
+        st.caption(f"Average quality (overall): {avg_quality}")
+        st.line_chart(
+            data=quality, x_label="number of question/guess", y_label="quality of guess"
+        )
+        # moving_averages = uniform_filter(guesses, size=5, mode="nearest", output=float)
+        # print(guesses)
+        # print(moving_averages)
+        # st.line_chart(moving_averages)
