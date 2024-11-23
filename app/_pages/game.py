@@ -5,6 +5,14 @@ import random
 import yaml
 from openai import OpenAI
 from typing import List
+from pydantic import BaseModel
+
+
+class QualityEvaluation(BaseModel):
+    """Format for the response of the quality evaluation."""
+
+    quality: int
+
 
 st.title("Animal guessing game")
 
@@ -85,12 +93,11 @@ class Game:
                 "content": f"The question to evaluate is: '{new_history[-1]["content"]}'. Please only answer with a number from 1-10.",
             }
         ]
-        quality = self.client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=new_history,
+        quality = self.client.beta.chat.completions.parse(
+            model="gpt-4o-mini", messages=new_history, response_format=QualityEvaluation
         )
-        quality = quality.choices[0].message.content
-        st.session_state.game_history[-1]["quality_of_guesses"].append(int(quality))
+        quality = quality.choices[0].message.parsed.quality
+        st.session_state.game_history[-1]["quality_of_guesses"].append(quality)
 
     def reset_game(self):
         """Reset game and initialize all necessary variables."""
