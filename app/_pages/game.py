@@ -116,7 +116,12 @@ class Game:
             dict: game history entry
 
         """
-        return {"animal": animal, "number_of_guesses": 0, "quality_of_guesses": []}
+        return {
+            "animal": animal,
+            "number_of_guesses": 0,
+            "quality_of_guesses": [],
+            "user_chat": [],
+        }
 
     def initial_message(self) -> List[dict]:
         """Get initital message.
@@ -150,6 +155,7 @@ class Game:
         if guess := st.chat_input(
             "Enter animal or question:", disabled=(st.session_state.state == "win")
         ):
+            st.session_state.game_history[-1]["user_chat"].append(guess)
             self.evaluate_input(guess)
             st.write(
                 f"Your last question/guess was of quality: {st.session_state.game_history[-1]["quality_of_guesses"][-1]}"
