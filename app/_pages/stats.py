@@ -3,19 +3,17 @@
 import streamlit as st
 from scipy.ndimage import uniform_filter
 import numpy as np
-import yaml
 import altair as alt
 import pandas as pd
 
 st.title("Stats")
-
-stream = open("app/guessing_config.yaml", "r")
-data = yaml.load(stream, Loader=yaml.Loader)
-animals = data["animals"]
+animals = list(
+    set(map(lambda game: game["animal"], st.session_state.game_history[:-1]))
+)
 animals.insert(0, "All")
-option = st.selectbox("Animals", animals)
 
-if "game_history" in st.session_state and len(st.session_state.game_history) > 0:
+if "game_history" in st.session_state and len(st.session_state.game_history) > 1:
+    option = st.selectbox("Animals", animals)
     relevant_games = st.session_state.game_history[:-1]
     if option != "All":
         relevant_games = list(
@@ -120,3 +118,5 @@ if "game_history" in st.session_state and len(st.session_state.game_history) > 0
         # print(guesses)
         # print(moving_averages)
         # st.line_chart(moving_averages)
+else:
+    st.write("Finish a game first before you can see any stats.")
