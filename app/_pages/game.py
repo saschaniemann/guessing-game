@@ -79,7 +79,7 @@ class Game:
         self.get_quality_of_guess()
         if response == "Correct! You won.":
             st.session_state.state = "win"
-            st.rerun()
+        st.rerun()
 
     def get_quality_of_guess(self):
         """Calculate the quality of the last guess and add it to the history."""
@@ -147,24 +147,34 @@ class Game:
         print(st.session_state["animal"])
         st.write("Your goal is to guess a randomly picked animal.")
 
+        counter_user_messages = 0
         for message in st.session_state.chat_history:
             if message["role"] == "system":
                 continue
-            st.chat_message(message["role"]).write(message["content"])
+            if message["role"] == "user":
+                quality_of_question = st.session_state.game_history[-1][
+                    "quality_of_guesses"
+                ][counter_user_messages]
+                st.chat_message(message["role"]).write(
+                    f"""
+                    <div style="display: flex; justify-content: space-between; align-items: center">
+                        <div style="text-align: left;"><p>{message["content"]}</p></div>
+                        <div style="text-align: right;"><p>Quality: {quality_of_question}</p></div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                counter_user_messages += 1
+            else:
+                st.chat_message(message["role"]).write(message["content"])
 
         if guess := st.chat_input(
             "Enter animal or question:", disabled=(st.session_state.state == "win")
         ):
             st.session_state.game_history[-1]["user_chat"].append(guess)
             self.evaluate_input(guess)
-            st.write(
-                f"Your last question/guess was of quality: {st.session_state.game_history[-1]["quality_of_guesses"][-1]}"
-            )
 
         if st.session_state.state == "win":
-            st.write(
-                f"Your last question/guess was of quality: {st.session_state.game_history[-1]["quality_of_guesses"][-1]}"
-            )
             st.button("Play again", on_click=self.reset_game)
 
 
