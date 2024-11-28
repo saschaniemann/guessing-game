@@ -79,6 +79,7 @@ class Game:
         self.get_quality_of_guess()
         if response == "Correct! You won.":
             st.session_state.state = "win"
+        st.session_state.disable_input = False
         st.rerun()
 
     def get_quality_of_guess(self):
@@ -159,7 +160,7 @@ class Game:
                     f"""
                     <div style="display: flex; justify-content: space-between; align-items: center">
                         <div style="text-align: left;"><p>{message["content"]}</p></div>
-                        <div style="text-align: right;"><p>Quality: {quality_of_question}</p></div>
+                        <div style="text-align: right;"><p>Quality: {quality_of_question}/10</p></div>
                     </div>
                     """,
                     unsafe_allow_html=True,
