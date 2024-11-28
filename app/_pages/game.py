@@ -92,14 +92,14 @@ class Game:
 
     def get_quality_of_guess(self):
         """Calculate the quality of the last guess and add it to the history."""
-        system_prompt = f"""In the context of an animal guessing game: Your job is to evaluate the quality of the user's last question from 0 (bad question) - 10 (good question). Keeping the history of this chat in mind and the knowledge the user has obtained before, a good question is a question that drastically decreases the number of remaining animals from the animals that are still possible. It does not matter if the answer would be yes or no but instead what fraction of remaining animals are ruled out. Similar to information gain. Please answer with the number only."""
+        system_prompt = f"""In the context of an animal guessing game: Your job is to evaluate the quality of the user's last question from 1 (bad question) - 10 (good question). Keeping the history of this chat in mind and the knowledge the user has obtained before, a good question is a question that drastically decreases the number of remaining animals from the animals that are still possible. It does not matter if the answer would be yes or no but instead what fraction of remaining animals are ruled out. Similar to information gain. Please answer with the number only."""
         new_history = [
             {"role": "system", "content": system_prompt}
         ] + st.session_state.chat_history[1:-1]
         new_history += [
             {
                 "role": "user",
-                "content": f"The question to evaluate is: '{new_history[-1]["content"]}'. Please answer with 0 if it asks for a hint or it's not a valid question or guess. Else only answer with a number from 1-10.",
+                "content": f"The question to evaluate is: '{new_history[-1]["content"]}'. Please only answer 0 if it asks for a hint or it's not an animal or a valid question which can be answered with yes or no. Else only answer with a number from 1-10.",
             }
         ]
         quality = self.client.beta.chat.completions.parse(
