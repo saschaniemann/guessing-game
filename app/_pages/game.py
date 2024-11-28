@@ -99,7 +99,7 @@ class Game:
         new_history += [
             {
                 "role": "user",
-                "content": f"The question to evaluate is: '{new_history[-1]["content"]}'. Please only answer 0 if it asks for a hint or it's not an animal or a valid question which can be answered with yes or no. Else only answer with a number from 1-10.",
+                "content": f"The question to evaluate is: '{new_history[-1]["content"]}'. Please only answer 0 if it asks for a hint, it doesn't contain an animal guess or it's not a question which can be answered with yes or no. Else only answer with a number from 1-10.",
             }
         ]
         quality = self.client.beta.chat.completions.parse(
@@ -142,7 +142,7 @@ class Game:
         return [
             {
                 "role": "system",
-                "content": f"You are a game master of an animal guessing game. The user asks questions or asks for a hint. You only answer questions with yes or no. If the player asks for it provide a hint helping him guessing the animal. The hints shouldn't be too revealing the first times but after asking many times for a hint the animal should be obvious. The animal is '{st.session_state.animal}'. Never tell the name of the animal before the user guessed it! If you think the user is right answer 'Correct! You won.'",
+                "content": f"You are a game master of an animal guessing game. The user asks questions or asks for a hint. You only answer questions with yes or no. If the player asks for it provide a hint helping him guessing the animal but the hints are not allowed to be too imformative but rather like a characteristic many animals have in common. The animal is '{st.session_state.animal}'. Never tell the name of the animal before the user guessed it! If you think the user is right answer 'Correct! You won.'",
             },
             {"role": "assistant", "content": "What is your first guess or question?"},
         ]
