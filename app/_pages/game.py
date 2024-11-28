@@ -160,9 +160,10 @@ class Game:
             if message["role"] == "system":
                 continue
             if message["role"] == "user":
-                quality_of_question = st.session_state.game_history[-1][
-                    "quality_of_guesses"
-                ][counter_user_messages]
+                qualities = st.session_state.game_history[-1]["quality_of_guesses"]
+                if len(qualities) < counter_user_messages + 1:
+                    continue
+                quality_of_question = qualities[counter_user_messages]
                 st.chat_message(message["role"]).write(
                     f"""
                     <div style="display: flex; justify-content: space-between; align-items: center">
