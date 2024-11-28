@@ -21,7 +21,6 @@ if "game_history" in st.session_state and len(st.session_state.game_history) > 1
         )
     guesses = [game["number_of_guesses"] for game in relevant_games]
     average = np.average(guesses) if len(guesses) > 0 else np.nan
-    print(relevant_games)
 
     st.caption(f"Total games played: {len(relevant_games)}")
     if len(relevant_games) > 0:
@@ -40,12 +39,6 @@ if "game_history" in st.session_state and len(st.session_state.game_history) > 1
                 ],
             )
         )
-        # st.bar_chart(
-        #    data=relevant_games,
-        #    y="number_of_guesses",
-        #    x_label="Round",
-        #    y_label="Number of guesses and questions",
-        # )
         st.altair_chart(chart, use_container_width=True)
         st.caption(
             f"Average quality (last game): {np.average(relevant_games[-1]["quality_of_guesses"])}"
@@ -74,12 +67,6 @@ if "game_history" in st.session_state and len(st.session_state.game_history) > 1
             )
         )
         st.altair_chart(chart, use_container_width=True)
-        # st.bar_chart(
-        #    data=data,
-        #    x = "i",
-        #    x_label="number of question/guess",
-        #    y_label="quality of guess",
-        # )
 
         avg_qualities = [
             {
@@ -109,14 +96,5 @@ if "game_history" in st.session_state and len(st.session_state.game_history) > 1
             )
         )
         st.altair_chart(chart, use_container_width=True)
-        # st.bar_chart(
-        #    data=avg_qualities,
-        #    x_label="round",
-        #    y_label="average quality of guess"
-        # )
-        # moving_averages = uniform_filter(guesses, size=5, mode="nearest", output=float)
-        # print(guesses)
-        # print(moving_averages)
-        # st.line_chart(moving_averages)
 else:
     st.write("Finish a game first before you can see any stats.")

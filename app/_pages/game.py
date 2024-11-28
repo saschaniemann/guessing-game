@@ -90,7 +90,7 @@ class Game:
         new_history += [
             {
                 "role": "user",
-                "content": f"The question to evaluate is: '{new_history[-1]["content"]}'. Please only answer with a number from 1-10.",
+                "content": f"The question to evaluate is: '{new_history[-1]["content"]}'. Please answer with 0 if it asks for a hint or it's not a valid question or guess. Else only answer with a number from 1-10.",
             }
         ]
         quality = self.client.beta.chat.completions.parse(
@@ -133,7 +133,7 @@ class Game:
         return [
             {
                 "role": "system",
-                "content": f"You are a game master of an animal guessing game. The user asks questions. You answer with yes or no. The animal is '{st.session_state.animal}'. Never tell the name of the animal before the user guessed it! If you think the user is right answer 'Correct! You won.'",
+                "content": f"You are a game master of an animal guessing game. The user asks questions or asks for a hint. You only answer questions with yes or no. If the player asks for it provide a hint helping him guessing the animal. The hints shouldn't be too revealing the first times but after asking many times for a hint the animal should be obvious. The animal is '{st.session_state.animal}'. Never tell the name of the animal before the user guessed it! If you think the user is right answer 'Correct! You won.'",
             },
             {"role": "assistant", "content": "What is your first guess or question?"},
         ]
@@ -145,7 +145,10 @@ class Game:
         and the output message.
         """
         print(st.session_state["animal"])
-        st.write("Your goal is to guess a randomly picked animal.")
+        st.write(
+            "Your goal is to guess a randomly picked animal. You can enter your guess or ask a question about the animal. If the question can be answered with yes or no, the answer will be provided by the game master. Additionally the game master rates your question or guess from 1-10 depending on how well it reduces the number of possible animals. If you are stuck you can ask for a hint and the game master tries to help you. But keep in mind that the game master will rate this with a poor quality. After guessing the correct animal you can start again guessing another animal and the stats page provides some statistics about your past games and the quality of your guesses in your latest finished game in a graphical way."
+        )
+        st.write("Now enjoy the Animal Guessing Game!")
 
         counter_user_messages = 0
         for message in st.session_state.chat_history:
