@@ -92,14 +92,14 @@ class Game:
 
     def get_quality_of_guess(self):
         """Calculate the quality of the last guess and add it to the history."""
-        system_prompt = f"""In the context of an animal guessing game: Your job is to evaluate the quality of the user's last question from 0 (bad question) - 10 (good question). Keeping the history of this chat in mind and the knowledge the user has obtained before, a good question is a question that drastically decreases the number of remaining animals from the animals that are still possible. It does not matter if the answer would be yes or no but instead what fraction of remaining animals are ruled out. Similar to information gain. Please answer with the number only."""
+        system_prompt = f"""In the context of an animal guessing game: Your job is to evaluate the quality of the user's last question from 1 (bad question) - 10 (good question). Keeping the history of this chat in mind and the knowledge the user has obtained before, a good question is a question that drastically decreases the number of remaining animals from the animals that are still possible. It does not matter if the answer would be yes or no but instead what fraction of remaining animals are ruled out. Similar to information gain. Please answer with the number only."""
         new_history = [
             {"role": "system", "content": system_prompt}
         ] + st.session_state.chat_history[1:-1]
         new_history += [
             {
                 "role": "user",
-                "content": f"The question to evaluate is: '{new_history[-1]["content"]}'. Please only answer with a number from 1-10.",
+                "content": f"The question to evaluate is: '{new_history[-1]["content"]}'. Please only answer 0 if it asks for a hint, it doesn't contain an animal guess or it's not a question which can be answered with yes or no. Else only answer with a number from 1-10.",
             }
         ]
         quality = self.client.beta.chat.completions.parse(
@@ -154,7 +154,10 @@ class Game:
         and the output message.
         """
         print(st.session_state["animal"])
-        st.write("Your goal is to guess a randomly picked animal.")
+        st.write(
+            "Your goal is to guess a randomly picked animal. You can enter your guess or ask a question about the animal. If the question can be answered with yes or no, the answer will be provided by the game master. Additionally the game master rates your question or guess from 1-10 depending on how well it reduces the number of possible animals. If you are stuck you can ask for a hint and the game master tries to help you. But keep in mind that the game master will rate this with a poor quality. After guessing the correct animal you can start again guessing another animal and the stats page provides some statistics about your past games and the quality of your guesses in your latest finished game in a graphical way."
+        )
+        st.write("Now enjoy the Animal Guessing Game!")
 
         counter_user_messages = 0
         for message in st.session_state.chat_history:
