@@ -14,6 +14,13 @@ class QualityEvaluation(BaseModel):
     quality: int
 
 
+class QuestionResponse(BaseModel):
+    """Response of the LLM to the latest question."""
+
+    response: str
+    win: bool
+
+
 st.title("Animal guessing game")
 
 
@@ -68,16 +75,17 @@ class Game:
             st.markdown(guess)
         st.session_state.game_history[-1]["number_of_guesses"] += 1
 
-        with st.chat_message("assistant"):
-            stream = self.client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=st.session_state.chat_history,
-                stream=True,
-            )
-            response = st.write_stream(stream)
+        reponse = self.client.beta.chat.completions.parse(
+            model="gpt-4o-mini",
+            messages=st.session_state.chat_history,
+            response_format=QuestionResponse,
+        )
+        answer = reponse.choices[0].message.parsed
+        response = answer.response
+        has_won = answer.win
         st.session_state.chat_history.append({"role": "assistant", "content": response})
         self.get_quality_of_guess()
-        if response == "Correct! You won.":
+        if has_won:
             st.session_state.state = "win"
         st.session_state.disable_input = False
         st.rerun()
@@ -134,7 +142,7 @@ class Game:
         return [
             {
                 "role": "system",
-                "content": f"You are a game master of an animal guessing game. The user asks questions. You answer with yes or no. The animal is '{st.session_state.animal}'. Never tell the name of the animal before the user guessed it! If you think the user is right answer 'Correct! You won.'",
+                "content": f"You are a game master of an animal guessing game. The user asks questions or asks for a hint. You answer with the string 'Yes', 'No' or the hint and wether the user has won the game. The animal is '{st.session_state.animal}'. Never tell the name of the animal before the user guessed it! If you think the user is right answer 'Correct! You won.' Do not give helpfull hint at the beginning of the game.",
             },
             {"role": "assistant", "content": "What is your first guess or question?"},
         ]
@@ -153,9 +161,10 @@ class Game:
             if message["role"] == "system":
                 continue
             if message["role"] == "user":
-                quality_of_question = st.session_state.game_history[-1][
-                    "quality_of_guesses"
-                ][counter_user_messages]
+                qualities = st.session_state.game_history[-1]["quality_of_guesses"]
+                if len(qualities) < counter_user_messages + 1:
+                    continue
+                quality_of_question = qualities[counter_user_messages]
                 st.chat_message(message["role"]).write(
                     f"""
                     <div style="display: flex; justify-content: space-between; align-items: center">
