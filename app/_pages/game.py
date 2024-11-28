@@ -14,6 +14,13 @@ class QualityEvaluation(BaseModel):
     quality: int
 
 
+class QuestionResponse(BaseModel):
+    """Response of the LLM to the latest question."""
+
+    response: str
+    win: bool
+
+
 st.title("Animal guessing game")
 
 
@@ -68,17 +75,19 @@ class Game:
             st.markdown(guess)
         st.session_state.game_history[-1]["number_of_guesses"] += 1
 
-        with st.chat_message("assistant"):
-            stream = self.client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=st.session_state.chat_history,
-                stream=True,
-            )
-            response = st.write_stream(stream)
+        reponse = self.client.beta.chat.completions.parse(
+            model="gpt-4o-mini",
+            messages=st.session_state.chat_history,
+            response_format=QuestionResponse,
+        )
+        answer = reponse.choices[0].message.parsed
+        response = answer.response
+        has_won = answer.win
         st.session_state.chat_history.append({"role": "assistant", "content": response})
         self.get_quality_of_guess()
-        if response == "Correct! You won.":
+        if has_won:
             st.session_state.state = "win"
+        st.session_state.disable_input = False
         st.rerun()
 
     def get_quality_of_guess(self):
@@ -155,14 +164,15 @@ class Game:
             if message["role"] == "system":
                 continue
             if message["role"] == "user":
-                quality_of_question = st.session_state.game_history[-1][
-                    "quality_of_guesses"
-                ][counter_user_messages]
+                qualities = st.session_state.game_history[-1]["quality_of_guesses"]
+                if len(qualities) < counter_user_messages + 1:
+                    continue
+                quality_of_question = qualities[counter_user_messages]
                 st.chat_message(message["role"]).write(
                     f"""
                     <div style="display: flex; justify-content: space-between; align-items: center">
                         <div style="text-align: left;"><p>{message["content"]}</p></div>
-                        <div style="text-align: right;"><p>Quality: {quality_of_question}</p></div>
+                        <div style="text-align: right;"><p>Quality: {quality_of_question}/10</p></div>
                     </div>
                     """,
                     unsafe_allow_html=True,
