@@ -123,7 +123,7 @@ class Game:
         return [
             {
                 "role": "system",
-                "content": f"You are a game master of an animal guessing game. The user asks questions or asks for a hint. You answer with the string 'Yes', 'No' or the hint and wether the user has won the game. The animal is '{st.session_state.animal}'. Never tell the name of the animal before the user guessed it! If you think the user is right answer 'Correct! You won.' Do not give helpfull hints at the beginning of the game. Also, your job is to evaluate the quality of the user's last question from 1 (bad question) - 10 (good question). Keeping the history of this chat in mind and the knowledge the user has obtained before, a good question is a question that drastically decreases the number of remaining animals from the animals that are still possible. It does not matter if the answer would be yes or no but instead what fraction of remaining animals are ruled out. Similar to information gain.",
+                "content": f"You are a game master of an animal guessing game. The user asks questions or asks for a hint. You answer with the string 'Yes', 'No' or provide the hint and whether the user has won the game. If you provide a hint make sure it is not too revealing and the user has still a hard time guessing the animal. The animal is '{st.session_state.animal}'. Never tell the name of the animal before the user guessed it! If you think the user is right answer 'Correct! You won.' Also, your job is to evaluate the quality of the user's last question from 1 (bad question) - 10 (good question). If the user asks for a hint, doesn't ask a question about the animal which can be answered with yes or no or doesn't try to guess the animal return a 0 as quality. Keeping the history of this chat in mind and the knowledge the user has obtained before, a good question is a question that drastically decreases the number of remaining animals from the animals that are still possible. It does not matter if the answer would be yes or no but instead what fraction of remaining animals are ruled out. Similar to information gain.",
             },
             {"role": "assistant", "content": "What is your first guess or question?"},
         ]
@@ -134,7 +134,6 @@ class Game:
         Display instructions, an input box for guessing the animal,
         and the output message.
         """
-        print(st.session_state["animal"])
         st.write(
             "Your goal is to guess a randomly picked animal. You can enter your guess or ask a question about the animal. If the question can be answered with yes or no, the answer will be provided by the game master. Additionally the game master rates your question or guess from 1-10 depending on how well it reduces the number of possible animals. If you are stuck you can ask for a hint and the game master tries to help you. But keep in mind that the game master will rate this with a poor quality. After guessing the correct animal you can start again guessing another animal and the stats page provides some statistics about your past games and the quality of your guesses in your latest finished game in a graphical way."
         )
