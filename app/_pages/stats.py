@@ -75,9 +75,10 @@ def qualities_last_game(relevant_games: list) -> None:
 
     data = pd.DataFrame(
         {
-            "quality": relevant_games[-1]["quality_of_guesses"],
-            "chat": relevant_games[-1]["user_chat"],
+            "quality": c["quality"],
+            "chat": c["content"],
         }
+        for c in relevant_games[-1]["user_chat"]
     )
     data["i"] = data.index + 1
     alt_chart(

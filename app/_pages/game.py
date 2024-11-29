@@ -8,12 +8,6 @@ from typing import List
 from pydantic import BaseModel
 
 
-class QualityEvaluation(BaseModel):
-    """Format for the response of the quality evaluation."""
-
-    quality: int
-
-
 class QuestionResponse(BaseModel):
     """Response of the LLM to the latest question."""
 
@@ -86,30 +80,14 @@ class Game:
         has_won = answer.win
         quality = answer.quality
         st.session_state.chat_history[-1]["quality"] = quality
+        st.session_state.game_history[-1]["user_chat"].append(
+            st.session_state.chat_history[-1]
+        )
         st.session_state.chat_history.append({"role": "assistant", "content": response})
         st.session_state.game_history[-1]["quality_of_guesses"].append(quality)
-        # self.get_quality_of_guess()
         if has_won:
             st.session_state.state = "win"
         st.rerun()
-
-    def get_quality_of_guess(self):
-        """Calculate the quality of the last guess and add it to the history."""
-        system_prompt = f"""In the context of an animal guessing game: Your job is to evaluate the quality of the user's last question from 1 (bad question) - 10 (good question). Keeping the history of this chat in mind and the knowledge the user has obtained before, a good question is a question that drastically decreases the number of remaining animals from the animals that are still possible. It does not matter if the answer would be yes or no but instead what fraction of remaining animals are ruled out. Similar to information gain. Please answer with the number only."""
-        new_history = [
-            {"role": "system", "content": system_prompt}
-        ] + st.session_state.chat_history[1:-1]
-        new_history += [
-            {
-                "role": "user",
-                "content": f"The question to evaluate is: '{new_history[-1]["content"]}'. Please only answer 0 if it asks for a hint, it doesn't contain an animal guess or it's not a question which can be answered with yes or no. Else only answer with a number from 1-10.",
-            }
-        ]
-        quality = self.client.beta.chat.completions.parse(
-            model="gpt-4o-mini", messages=new_history, response_format=QualityEvaluation
-        )
-        quality = quality.choices[0].message.parsed.quality
-        st.session_state.game_history[-1]["quality_of_guesses"].append(quality)
 
     def reset_game(self):
         """Reset game and initialize all necessary variables."""
@@ -162,15 +140,10 @@ class Game:
         )
         st.write("Now enjoy the Animal Guessing Game!")
 
-        counter_user_messages = 0
-        qualities = st.session_state.game_history[-1]["quality_of_guesses"]
         for message in st.session_state.chat_history:
             if message["role"] == "system":
                 continue
             if message["role"] == "user" and "quality" in message:
-                # if len(qualities) < counter_user_messages + 1:
-                #     continue
-                # quality_of_question = qualities[counter_user_messages]
                 st.chat_message(message["role"]).write(
                     f"""
                     <div style="display: flex; justify-content: space-between; align-items: center">
@@ -180,14 +153,12 @@ class Game:
                     """,
                     unsafe_allow_html=True,
                 )
-                counter_user_messages += 1
             else:
                 st.chat_message(message["role"]).write(message["content"])
 
         if guess := st.chat_input(
             "Enter animal or question:", disabled=(st.session_state.state == "win")
         ):
-            st.session_state.game_history[-1]["user_chat"].append(guess)
             self.evaluate_input(guess)
 
         if st.session_state.state == "win":
