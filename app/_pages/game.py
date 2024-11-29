@@ -19,6 +19,7 @@ class QuestionResponse(BaseModel):
 
     response: str
     win: bool
+    quality: int
 
 
 st.title("Animal guessing game")
@@ -83,11 +84,13 @@ class Game:
         answer = reponse.choices[0].message.parsed
         response = answer.response
         has_won = answer.win
+        quality = answer.quality
+        st.session_state.chat_history[-1]["quality"] = quality
         st.session_state.chat_history.append({"role": "assistant", "content": response})
-        self.get_quality_of_guess()
+        st.session_state.game_history[-1]["quality_of_guesses"].append(quality)
+        # self.get_quality_of_guess()
         if has_won:
             st.session_state.state = "win"
-        st.session_state.disable_input = False
         st.rerun()
 
     def get_quality_of_guess(self):
@@ -142,7 +145,7 @@ class Game:
         return [
             {
                 "role": "system",
-                "content": f"You are a game master of an animal guessing game. The user asks questions or asks for a hint. You answer with the string 'Yes', 'No' or the hint and wether the user has won the game. The animal is '{st.session_state.animal}'. Never tell the name of the animal before the user guessed it! If you think the user is right answer 'Correct! You won.' Do not give helpfull hint at the beginning of the game.",
+                "content": f"You are a game master of an animal guessing game. The user asks questions or asks for a hint. You answer with the string 'Yes', 'No' or the hint and wether the user has won the game. The animal is '{st.session_state.animal}'. Never tell the name of the animal before the user guessed it! If you think the user is right answer 'Correct! You won.' Do not give helpfull hints at the beginning of the game. Also, your job is to evaluate the quality of the user's last question from 1 (bad question) - 10 (good question). Keeping the history of this chat in mind and the knowledge the user has obtained before, a good question is a question that drastically decreases the number of remaining animals from the animals that are still possible. It does not matter if the answer would be yes or no but instead what fraction of remaining animals are ruled out. Similar to information gain.",
             },
             {"role": "assistant", "content": "What is your first guess or question?"},
         ]
@@ -160,19 +163,19 @@ class Game:
         st.write("Now enjoy the Animal Guessing Game!")
 
         counter_user_messages = 0
+        qualities = st.session_state.game_history[-1]["quality_of_guesses"]
         for message in st.session_state.chat_history:
             if message["role"] == "system":
                 continue
-            if message["role"] == "user":
-                qualities = st.session_state.game_history[-1]["quality_of_guesses"]
-                if len(qualities) < counter_user_messages + 1:
-                    continue
-                quality_of_question = qualities[counter_user_messages]
+            if message["role"] == "user" and "quality" in message:
+                # if len(qualities) < counter_user_messages + 1:
+                #     continue
+                # quality_of_question = qualities[counter_user_messages]
                 st.chat_message(message["role"]).write(
                     f"""
                     <div style="display: flex; justify-content: space-between; align-items: center">
                         <div style="text-align: left;"><p>{message["content"]}</p></div>
-                        <div style="text-align: right;"><p>Quality: {quality_of_question}/10</p></div>
+                        <div style="text-align: right;"><p>Quality: {message["quality"]}/10</p></div>
                     </div>
                     """,
                     unsafe_allow_html=True,
